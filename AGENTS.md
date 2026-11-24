@@ -24,5 +24,8 @@ Cloud-ready responsive ERP for a packaged water manufacturer. Built from RDP v3.
 - 2026-11-25: Supabase chosen as equivalent backend because no paid server/hosting credentials were supplied and Pages-only cannot satisfy shared cloud DB.
 
 ## State
-- Foundation build in progress. Check `TASK.md` for phase status.
+- Foundation build complete and live in local demo mode at `https://smartbooksbasha-svg.github.io/glacier-erp-v3/`.
+- `npm test`: 16/16 green. `npm run build`: green. Live assets verified 200.
+- PostgreSQL schema is in `src/lib/schema.sql` but not executed; no Supabase credentials supplied.
 - Blockers for full cloud go-live: Supabase URL + anon key, auditor approvals, v2 browser backup exports, owner/accountant sign-off.
+- Check `TASK.md` for exact done vs pending acceptance items.
