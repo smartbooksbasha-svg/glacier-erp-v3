@@ -3,11 +3,34 @@ import type { CloudConfig, CompanyConfig, Role, User } from './types';
 export const APP_VER = 'v3.0.0';
 export const OWNER_EMAIL = 'smartbooksbasha@gmail.com';
 
+export type ApprovalRecord = {
+  auditorName: string;
+  reference: string;
+  gstin: boolean;
+  address: boolean;
+  hsn: boolean;
+  rates: boolean;
+  opening: boolean;
+  approvedAt: string;
+};
+
+export type ReconciliationRecord = {
+  importedRows: number;
+  matchedRows: number;
+  variancePaise: number;
+  ownerSignoff: string;
+  accountantSignoff: string;
+  notes: string;
+  signedAt: string;
+};
+
 const KEYS = {
   cloud: 'gws3_cloud',
   company: 'gws3_company',
   user: 'gws3_user',
-  seed: 'gws3_seeded'
+  seed: 'gws3_seeded',
+  approvals: 'gws3_approvals',
+  reconciliation: 'gws3_reconciliation'
 };
 
 export const DEFAULT_COMPANY: CompanyConfig = {
@@ -19,6 +42,14 @@ export const DEFAULT_COMPANY: CompanyConfig = {
   defaultGstRate: 0,
   invoicePrefix: 'GWS/INV',
   invoiceStart: 1
+};
+
+export const DEFAULT_APPROVALS: ApprovalRecord = {
+  auditorName: '', reference: '', gstin: false, address: false, hsn: false, rates: false, opening: false, approvedAt: ''
+};
+
+export const DEFAULT_RECONCILIATION: ReconciliationRecord = {
+  importedRows: 0, matchedRows: 0, variancePaise: 0, ownerSignoff: '', accountantSignoff: '', notes: '', signedAt: ''
 };
 
 function read<T>(key: string, fallback: T): T {
@@ -53,6 +84,30 @@ export function getCompanyConfig(): CompanyConfig {
 
 export function setCompanyConfig(config: CompanyConfig): void {
   write(KEYS.company, config);
+}
+
+export function getApprovals(): ApprovalRecord {
+  return read<ApprovalRecord>(KEYS.approvals, DEFAULT_APPROVALS);
+}
+
+export function setApprovals(record: ApprovalRecord): void {
+  write(KEYS.approvals, record);
+}
+
+export function approvalsComplete(record: ApprovalRecord): boolean {
+  return Boolean(record.auditorName.trim() && record.reference.trim() && record.gstin && record.address && record.hsn && record.rates && record.opening);
+}
+
+export function getReconciliation(): ReconciliationRecord {
+  return read<ReconciliationRecord>(KEYS.reconciliation, DEFAULT_RECONCILIATION);
+}
+
+export function setReconciliation(record: ReconciliationRecord): void {
+  write(KEYS.reconciliation, record);
+}
+
+export function reconciliationComplete(record: ReconciliationRecord): boolean {
+  return Boolean(record.ownerSignoff.trim() && record.accountantSignoff.trim() && record.matchedRows >= record.importedRows && Math.abs(record.variancePaise) === 0);
 }
 
 export function getCurrentUser(): User | null {

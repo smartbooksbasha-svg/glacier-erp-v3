@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { Btn, Card, Chip, Empty, Field, Icon } from '../components/ui';
-import { getCloudConfig, getCompanyConfig, hasCloudConfig, setCloudConfig, setCompanyConfig } from '../lib/config';
+import { formatMoney } from '../lib/calc';
+import { approvalsComplete, getApprovals, getCloudConfig, getCompanyConfig, getReconciliation, hasCloudConfig, reconciliationComplete, setApprovals as saveApprovals, setCloudConfig, setCompanyConfig, setReconciliation as saveReconciliation } from '../lib/config';
 import { currentUser } from '../lib/auth';
 import { downloadText, exportCsv, exportJson } from '../lib/exports';
-import { exportAll, listRows, importAll, resetSupabaseClient } from '../lib/store';
+import { exportAll, listRows, importAll, resetSupabaseClient, supabaseClient } from '../lib/store';
 import schemaSql from '../lib/schema.sql?raw';
 import type { Role, Row } from '../lib/types';
 
@@ -12,6 +13,9 @@ export function Admin({ role, actor }: { role: Role; actor: string }) {
   const [company, setCompany] = useState(getCompanyConfig());
   const [users, setUsers] = useState<Row[]>([]);
   const [audit, setAudit] = useState<Row[]>([]);
+  const [approvals, setApprovalRecord] = useState(getApprovals());
+  const [recon, setRecon] = useState(getReconciliation());
+  const [health, setHealth] = useState<Array<{ label: string; ok: boolean; note: string }>>([]);
   const [toast, setToast] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -29,6 +33,35 @@ export function Admin({ role, actor }: { role: Role; actor: string }) {
     resetSupabaseClient();
     setToast('Cloud config saved. Reload to use the new backend.');
   };
+
+  const runHealth = async () => {
+    const checks: Array<{ label: string; ok: boolean; note: string }> = [];
+    const cloudReady = hasCloudConfig();
+    checks.push({ label: 'Cloud config', ok: cloudReady, note: cloudReady ? 'URL + anon key present' : 'Local demo mode' });
+    let storageOk = false;
+    try { localStorage.setItem('gws3_health', '1'); localStorage.removeItem('gws3_health'); storageOk = true; } catch { /* unavailable */ }
+    checks.push({ label: 'Device storage', ok: storageOk, note: storageOk ? 'Writable' : 'Browser blocked storage' });
+    const swOk = 'serviceWorker' in navigator;
+    checks.push({ label: 'Offline support', ok: swOk, note: swOk ? 'Service worker supported' : 'No service worker in this browser' });
+    if (cloudReady && supabaseClient()) {
+      try {
+        const { error } = await supabaseClient()!.from('app_users').select('id').limit(1);
+        checks.push({ label: 'PostgreSQL schema', ok: !error, note: error ? error.message : 'app_users responded' });
+      } catch (e) { checks.push({ label: 'PostgreSQL schema', ok: false, note: e instanceof Error ? e.message : 'Unreachable' }); }
+    } else {
+      checks.push({ label: 'PostgreSQL schema', ok: false, note: 'Not executed in local demo' });
+    }
+    setHealth(checks);
+    setToast('Health check complete.');
+  };
+
+  const trainingNote = `# Glacier ERP v3 — launch note
+1. Export v2 browser backups from every old device; keep two read-only copies.
+2. Enter Supabase URL + anon key in Administration → Cloud setup, then execute schema.sql.
+3. Capture auditor approval for GSTIN, address, HSN, GST rates and opening balances.
+4. Import backup, reconcile counts/totals, record owner + accountant sign-off.
+5. Verify A4 invoice, 80 mm receipt, FEFO dispatch and attachment upload on a real device.
+Reports are working papers, not tax advice.`;
 
   const doImport = async (file: File | undefined) => {
     if (!file) return;
@@ -84,6 +117,52 @@ export function Admin({ role, actor }: { role: Role; actor: string }) {
         </div>
       </Card>
     </div>
+
+    <div className="grid two" style={{ marginTop: 16 }}>
+      <Card>
+        <div className="card-head"><h2>Approvals & sign-off</h2><Chip tone={approvalsComplete(approvals) ? 'ok' : 'warn'}>{approvalsComplete(approvals) ? 'Approved' : 'Pending'}</Chip></div>
+        <div style={{ display: 'grid', gap: 10 }}>
+          <Field label="Auditor name"><input className="input" value={approvals.auditorName} onChange={(e) => setApprovalRecord({ ...approvals, auditorName: e.target.value })} /></Field>
+          <Field label="Approval reference"><input className="input" value={approvals.reference} onChange={(e) => setApprovalRecord({ ...approvals, reference: e.target.value })} /></Field>
+          {(['gstin', 'address', 'hsn', 'rates', 'opening'] as const).map((key) => {
+            const labels: Record<string, string> = { gstin: 'GSTIN approved', address: 'Address & state approved', hsn: 'HSN approved', rates: 'GST rates approved', opening: 'Opening balances approved' };
+            return <Field key={key} label={labels[key]}><input className="input" type="checkbox" checked={approvals[key]} onChange={(e) => setApprovalRecord({ ...approvals, [key]: e.target.checked })} style={{ width: 'auto', minHeight: 0 }} /></Field>;
+          })}
+          <Btn variant="primary" onClick={() => {
+            const next = { ...approvals, approvedAt: new Date().toISOString() };
+            const record = approvalsComplete(next) ? next : { ...next, approvedAt: '' };
+            saveApprovals(record); setApprovalRecord(record);
+            setToast(record.approvedAt ? 'Approval register signed.' : 'Saved pending approval register.');
+          }}>Save approval register</Btn>
+        </div>
+      </Card>
+      <Card>
+        <div className="card-head"><h2>Reconciliation sign-off</h2><Chip tone={reconciliationComplete(recon) ? 'ok' : 'warn'}>{reconciliationComplete(recon) ? 'Signed' : 'Pending'}</Chip></div>
+        <div style={{ display: 'grid', gap: 10 }}>
+          <Field label="Imported rows"><input className="input" type="number" value={recon.importedRows} onChange={(e) => setRecon({ ...recon, importedRows: Number(e.target.value) })} /></Field>
+          <Field label="Matched rows"><input className="input" type="number" value={recon.matchedRows} onChange={(e) => setRecon({ ...recon, matchedRows: Number(e.target.value) })} /></Field>
+          <Field label="Variance"><input className="input" type="number" step="0.01" value={recon.variancePaise / 100} onChange={(e) => setRecon({ ...recon, variancePaise: Math.round(Number(e.target.value) * 100) })} /></Field>
+          <Field label="Owner sign-off"><input className="input" value={recon.ownerSignoff} onChange={(e) => setRecon({ ...recon, ownerSignoff: e.target.value })} /></Field>
+          <Field label="Accountant sign-off"><input className="input" value={recon.accountantSignoff} onChange={(e) => setRecon({ ...recon, accountantSignoff: e.target.value })} /></Field>
+          <Field label="Notes" full><textarea className="input" rows={2} value={recon.notes} onChange={(e) => setRecon({ ...recon, notes: e.target.value })} /></Field>
+          <Btn variant="primary" onClick={() => {
+            const next = { ...recon, signedAt: new Date().toISOString() };
+            const record = reconciliationComplete(next) ? next : { ...next, signedAt: '' };
+            saveReconciliation(record); setRecon(record);
+            setToast(record.signedAt ? 'Reconciliation signed.' : `Reconciliation saved; variance ${formatMoney(record.variancePaise)}.`);
+          }}>Save reconciliation</Btn>
+        </div>
+      </Card>
+    </div>
+
+    <Card style={{ marginTop: 16 }}>
+      <div className="card-head"><h2>Health check & launch note</h2><Btn small onClick={() => void runHealth()}><Icon name="check" size={14} /> Run health check</Btn></div>
+      <div style={{ display: 'grid', gap: 10 }}>
+        <Btn onClick={() => downloadText('glacier-v3-launch-note.md', trainingNote)}><Icon name="download" size={15} /> Download launch/training note</Btn>
+        {health.length === 0 ? <p className="muted" style={{ margin: 0 }}>Run a check to verify cloud config, device storage, offline support and schema reachability.</p>
+          : health.map((check) => <div key={check.label} className="fefo-row"><Chip tone={check.ok ? 'ok' : 'warn'}>{check.ok ? 'PASS' : 'CHECK'}</Chip><strong>{check.label}</strong><span className="muted">{check.note}</span></div>)}
+      </div>
+    </Card>
 
     <Card style={{ marginTop: 16 }}>
       <div className="card-head"><h2>Audit log</h2><div style={{ display: 'flex', gap: 8 }}><Chip>{audit.length} shown</Chip><Btn small onClick={() => exportCsv('audit-log.csv', audit, ['at', 'actor', 'action', 'entity', 'summary'])}>CSV</Btn></div></div>

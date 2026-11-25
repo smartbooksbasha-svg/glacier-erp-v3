@@ -3,6 +3,7 @@ import { Btn, Chip, Empty, Field, Icon } from '../components/ui';
 import { formatMoney, toPaise } from '../lib/calc';
 import { getCompanyConfig } from '../lib/config';
 import { exportCsv, printRows } from '../lib/exports';
+import { dispatchQty, pickFefo, type FefoSuggestion } from '../lib/fefo';
 import { findModule, type ModuleConfig } from '../lib/modules';
 import { can } from '../lib/permissions';
 import { printInvoiceA4, printInvoice80mm } from '../lib/printDocs';
@@ -33,6 +34,7 @@ export function ModulePage({ moduleKey, role, actor }: { moduleKey: string; role
   const [busy, setBusy] = useState(false);
   const [cancelRow, setCancelRow] = useState<Row | null>(null);
   const [cancelReason, setCancelReason] = useState('');
+  const [fefo, setFefo] = useState<FefoSuggestion | null>(null);
 
   const load = useCallback(async () => {
     if (!mod) return;
@@ -64,6 +66,7 @@ export function ModulePage({ moduleKey, role, actor }: { moduleKey: string; role
       if (field.type === 'file') initial[`${field.name}Name`] = row ? String(row[`${field.name}Name`] ?? '') : '';
     }
     setForm(initial);
+    setFefo(null);
     setEditing(row === undefined ? null : row);
   };
 
@@ -111,6 +114,23 @@ export function ModulePage({ moduleKey, role, actor }: { moduleKey: string; role
       setToast({ text: `${uploaded.name} attached.` });
     } catch (err) { setToast({ text: err instanceof Error ? err.message : 'Upload failed.', err: true }); }
     finally { setBusy(false); event.target.value = ''; }
+  };
+
+  const loadFefo = async () => {
+    try {
+      setBusy(true);
+      const [products, batches, movements] = await Promise.all([
+        listRows('products'), listRows('batches'), listRows('stock_movements')
+      ]);
+      const product = products.find((p) => String(p.id) === String(form.productId ?? ''));
+      const qty = dispatchQty(form as unknown as Row, product).qty;
+      const suggestion = pickFefo(batches, movements, String(form.productId ?? ''), qty);
+      setFefo(suggestion);
+      if (!suggestion) { setToast({ text: 'No QC-released batch with stock for this product.', err: true }); return; }
+      setForm((current) => ({ ...current, batchNo: current.batchNo || suggestion.batchNo }));
+      setToast({ text: `FEFO: ${suggestion.batchNo} (${suggestion.available} available, expiry ${suggestion.expiryDate}).` });
+    } catch (err) { setToast({ text: err instanceof Error ? err.message : 'FEFO check failed.', err: true }); }
+    finally { setBusy(false); }
   };
 
   const doAction = async (row: Row, action: 'post' | 'delete') => {
@@ -172,7 +192,14 @@ export function ModulePage({ moduleKey, role, actor }: { moduleKey: string; role
       <div className="modal">
         <div className="modal-head"><h2>{editing ? 'Edit' : 'Add'} {mod.title.replace(/s$/, '')}</h2><button className="btn ghost small" onClick={() => setEditing(undefined)} aria-label="Close"><Icon name="close" /></button></div>
         <form onSubmit={submit}>
-          <div className="modal-body">{mod.fields.map((field) => <Field key={field.name} label={field.label} full={field.type === 'textarea' || field.type === 'file'}>
+          <div className="modal-body">{mod.key === 'dispatches' && <div className="field full fefo-box">
+            <label>FEFO / QC release</label>
+            <div className="fefo-row"><Btn small onClick={() => void loadFefo()} disabled={busy}><Icon name="inventory" size={14} /> Suggest batch</Btn>
+              {fefo && <span className="file-chip">{fefo.batchNo} · {fefo.available} available · exp {fefo.expiryDate}</span>}
+              {!fefo && <span className="muted file-hint">Pick a released batch by earliest expiry.</span>}
+            </div>
+          </div>}
+          {mod.fields.map((field) => <Field key={field.name} label={field.label} full={field.type === 'textarea' || field.type === 'file'}>
             {field.type === 'select' ? <select className="input" value={String(form[field.name] ?? '')} onChange={(e) => setForm({ ...form, [field.name]: e.target.value })}>
               <option value="">—</option>{field.options?.map((o) => <option key={o} value={o}>{o}</option>)}
             </select>

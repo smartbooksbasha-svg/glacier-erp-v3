@@ -10,8 +10,8 @@ const GROUPS = [
   ['Accounts', 'accounts'], ['Reports', 'reports'], ['Administration', 'admin']
 ] as const;
 
-export function Shell({ active, onNavigate, user, onLogout, children }: {
-  active: string; onNavigate: (group: string) => void; user: User; onLogout: () => void; children: React.ReactNode;
+export function Shell({ active, onNavigate, onQuick, user, onLogout, children }: {
+  active: string; onNavigate: (group: string) => void; onQuick: (group: string, module: string | null) => void; user: User; onLogout: () => void; children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const nav = (group: string) => { onNavigate(group); setOpen(false); };
@@ -43,6 +43,13 @@ export function Shell({ active, onNavigate, user, onLogout, children }: {
       </div>
       {children}
       <footer className="app-foot"><span>Glacier Water Solutions — RDP v3 build</span><span>India time (Asia/Kolkata) · {APP_VER}</span></footer>
+      <div className="quickbar" aria-label="Quick actions">
+        <button className={active === 'Overview' ? 'active' : ''} onClick={() => nav('Overview')}><Icon name="grid" size={16} /><span>Home</span></button>
+        {canSeeGroup(user.role, 'Sales') && <button onClick={() => { onQuick('Sales', 'invoices'); setOpen(false); }}><Icon name="sales" size={16} /><span>Invoices</span></button>}
+        {canSeeGroup(user.role, 'Inventory') && <button onClick={() => { onQuick('Inventory', 'products'); setOpen(false); }}><Icon name="inventory" size={16} /><span>Products</span></button>}
+        {canSeeGroup(user.role, 'Reports') && <button onClick={() => { onQuick('Reports', null); setOpen(false); }}><Icon name="reports" size={16} /><span>Reports</span></button>}
+        {canSeeGroup(user.role, 'Administration') && <button onClick={() => { onQuick('Administration', null); setOpen(false); }}><Icon name="admin" size={16} /><span>Admin</span></button>}
+      </div>
     </main>
   </div>;
 }

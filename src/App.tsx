@@ -75,7 +75,7 @@ export default function App() {
     </>;
   }
 
-  return <Shell active={group} onNavigate={(g) => navigate(g)} user={user} onLogout={logout}>
+  return <Shell active={group} onNavigate={(g) => navigate(g)} onQuick={(g, m) => navigate(g, m)} user={user} onLogout={logout}>
     {group !== 'Overview' && <div className="toolbar">
       <Btn variant={module ? 'ghost' : 'primary'} onClick={() => navigate(group)}>{group === 'Reports' ? 'Report summary' : group === 'Administration' ? 'Admin home' : `${group} home`}</Btn>
       {modulesForGroup(group).map((m) => <button key={m.key} className={`chip${module === m.key ? ' cyan' : ''}`} onClick={() => navigate(group, m.key)}>{m.title}</button>)}

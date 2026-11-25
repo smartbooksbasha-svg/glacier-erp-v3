@@ -88,4 +88,15 @@ describe('ERP UI smoke', () => {
     expect(navTexts).toContain('Sales');
     expect(navTexts).not.toContain('Administration');
   });
+
+  it('renders mobile quick actions for the owner', async () => {
+    const user: User = { id: 'u3', name: 'Owner', email: OWNER_EMAIL, role: 'owner', active: true };
+    localStorage.setItem('gws3_user', JSON.stringify(user));
+    await act(async () => { root.render(<App />); });
+    await act(async () => { await flush(); });
+    const quick = Array.from(container.querySelectorAll('.quickbar button')).map((b) => b.textContent?.trim());
+    expect(quick).toContain('Invoices');
+    expect(quick).toContain('Products');
+    expect(quick).toContain('Admin');
+  });
 });

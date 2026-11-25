@@ -2,6 +2,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { getCloudConfig, seedDone, markSeedDone } from './config';
 import { MODULES } from './modules';
 import { assertStockAvailable, bottlesFromCases, calcTotals, stockFromMovements } from './calc';
+import { dispatchQty, pickFefo } from './fefo';
 import type { LineItem, Row } from './types';
 
 const PREFIX = 'gws3_data_';
@@ -198,20 +199,31 @@ export async function postDocument(table: string, row: Row, actor: string): Prom
   };
 
   const productId = String(row.productId || 'unknown');
+  let batchNo = '';
   let qty = Math.trunc(Number(row.qty || 0));
   if (table === 'dispatches') {
     const products = await listRows('products');
     const product = products.find((p) => String(p.id) === productId);
-    qty = bottlesFromCases(Number(row.cases || 0), Number(row.looseBottles || 0), Number(product?.perCase || 24));
+    qty = dispatchQty(row, product).qty;
+    batchNo = String(row.batchNo || '');
+    if (!batchNo) throw new Error('Select a batch before posting a dispatch.');
+    const batches = await listRows('batches');
+    const batch = batches.find((b) => String(b.batchNo || '') === batchNo);
+    if (!batch) throw new Error('Selected batch does not exist.');
+    if (String(batch.qcStatus || '') !== 'Released') throw new Error('Only QC-released batches can be dispatched.');
+    const suggestion = pickFefo(batches, await listRows('stock_movements'), productId, qty);
+    if (suggestion && batchNo !== suggestion.batchNo && !String(row.overrideReason || '').trim()) {
+      throw new Error(`Batch ${batchNo} is not FEFO-first. Suggested: ${suggestion.batchNo}. Add an override reason.`);
+    }
   }
   const stock = await stockByProduct();
-  const stockActions: Array<{ direction: 'in' | 'out'; qty: number; reason: string }> = [];
+  const stockActions: Array<{ direction: 'in' | 'out'; qty: number; reason: string; batchNo?: string }> = [];
   const ledgerActions: Array<{ debitPaise: number; creditPaise: number; partyId: string; partyType: string; reference: string }> = [];
 
   if (['invoices', 'challans', 'dispatches'].includes(table)) {
     if (qty > 0) {
       assertStockAvailable(stock[productId] || 0, qty);
-      stockActions.push({ direction: 'out', qty, reason: `${table} posting` });
+      stockActions.push({ direction: 'out', qty, reason: `${table} posting`, batchNo: table === 'dispatches' ? batchNo : undefined });
     }
   }
   if (['goods_receipts', 'bills', 'sales_returns'].includes(table)) {
@@ -258,6 +270,7 @@ export async function postDocument(table: string, row: Row, actor: string): Prom
       productId,
       direction: action.direction,
       qty: action.qty,
+      batchNo: action.batchNo,
       reason: action.reason,
       posted: true,
       status: 'Posted',

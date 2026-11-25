@@ -60,4 +60,10 @@ describe('local demo data layer', () => {
     expect(rows).toHaveLength(1);
     expect(rows[0].actor).toBe('owner@test');
   });
+
+  it('blocks a dispatch with no QC-released batch', async () => {
+    await seedDemoData();
+    const dispatch = await saveRow('dispatches', { date: '2026-11-25', customerId: 'cust_1', productId: 'prod_300', cases: 1, status: 'Draft' } as unknown as Row);
+    await expect(postDocument('dispatches', dispatch, 'owner@test')).rejects.toThrow(/select a batch/i);
+  });
 });

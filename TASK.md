@@ -32,23 +32,25 @@ PRD / plan source: `RDP-v3.0-source.pdf` (8 pages) and `/data/data/com.termux/fi
   - [x] 3.1 PO → GRN → bill; direct bill; purchase returns.
   - [x] 3.2 Supplier payments, ledger entries and register.
   - [x] 3.3 Stock ledger, batches/expiry, counts/adjustments, negative-stock guard.
-  - [ ] 3.4 Automated FEFO dispatch suggestion and override-reason workflow.
+  - [x] 3.4 Automated FEFO dispatch suggestion, QC-release gate and override-reason workflow.
   - [x] 3.5 Reorder alerts and stock valuation view.
 - [ ] 4. Production/QC
   - [x] 4.1 BOM/recipe, production plans, batches, consumption, rejects registers.
   - [x] 4.2 QC tests, hold/release/reject and batch status update on approval.
   - [x] 4.3a Attachment-based lab reports, supplier bill scans, POD photos, expense proofs (local compressed demo + private Storage path).
-  - [ ] 4.3b Full standard-vs-actual costing policy (still pending).
+  - [x] 4.3b Standard-vs-actual costing engine + approved-variance-only financial statements (working paper; external approval still pending).
 - [ ] 5. Delivery/accounts
   - [x] 5.1 Dispatch, driver/vehicle, POD, returnables registers.
   - [x] 5.2 Cash/bank, expenses, journals, ledgers, capital/drawings, fixed assets.
   - [x] 5.3 Reports: sales, purchase, stock, GST working registers + auditor Excel pack.
-  - [ ] 5.4 Approved P&L and balance sheet (indicative only until opening balances are confirmed).
+  - [x] 5.4 P&L and balance sheet working papers, gated on approved costing + opening balances (UI wired in Reports).
   - [x] 5.5 Month lock/reopen module with reason field.
 - [ ] 6. Migration/launch
   - [x] 6.1 Import JSON backup into staging-style local adapter with rejected-row count.
-  - [ ] 6.2 Reconcile v2 counts/totals/balances; owner + accountant sign-off.
-  - [ ] 6.3 Security review, restore drill, cloud production deploy, training note.
+  - [x] 6.2 Approval register, reconciliation sign-off UI and health check (actual sign-offs are external).
+  - [ ] 6.3 Reconcile v2 counts/totals/balances with owner + accountant (needs exported backups).
+  - [ ] 6.4 Security review, restore drill and cloud production deploy.
+  - [x] 6.5 Mobile quick-action bar + launch/training note in Admin.
 
 ## Key decisions
 - New repo/folder `~/glacier-erp-v3`; v2 repo stays live as read-only archive at `https://smartbooksbasha-svg.github.io/glacier-water-solutions/`.
@@ -56,13 +58,15 @@ PRD / plan source: `RDP-v3.0-source.pdf` (8 pages) and `/data/data/com.termux/fi
 - App works in local demo mode before credentials are entered; cloud setup is entered in-app (URL + anon key only).
 - Money = integer paise everywhere; display with Indian formatting.
 - Stock = opening + posted inward − posted outward; never direct balance overwrite.
+- FEFO dispatch posts only QC `Released` batches; non-FEFO-first selection requires an override reason.
+- Costing/financial statements are working papers until auditor/owner approval and opening balances are signed off; only approved variances feed totals.
 - v3 live URL: `https://smartbooksbasha-svg.github.io/glacier-erp-v3/`.
 
 ## Verification record
-- `npm test`: 22/22 green (calc, posting/reversal/idempotency, UI login/nav/roles, A4/80 mm invoice print, attachment fields + file input).
+- `npm test`: 27/27 green (calc, posting/reversal/idempotency, UI login/nav/roles + mobile quick actions, A4/80 mm invoice print, attachment fields, FEFO, costing, approval/reconciliation gates).
 - `npm run build`: green, hashed chunks emitted.
-- Live assets verified 200: `/`, `/index.html`, JS/CSS chunks, `/manifest.webmanifest`, `/sw.js`, `/fonts.css`, fonts, icons, `/RDP-v3.0-source.pdf`.
+- Live assets after print/attachments verified 200: `/`, `/index.html`, `assets/index-BTJKE4IS.js`, `assets/index-BX4hAJVX.css`, `sw.js`.
 - PostgreSQL schema file is written but NOT executed (no Supabase credentials supplied).
 
 ## NOW
-Invoice print (A4 GST + 80 mm) and attachment upload are implemented and verified locally. Waiting on external inputs for full go-live: Supabase URL + anon key, auditor approvals, v2 browser backup exports, owner/accountant reconciliation sign-off. Next code items: FEFO dispatch suggestion, full costing policy, mobile quick actions.
+All code-side pendings from the "ji pendings sab kardu" instruction are implemented: FEFO + QC gate, costing + statements, approval/reconciliation/health UI, mobile quick actions. `npm test` 27/27 and build are green; commit/deploy/live verification is the current step. External go-live inputs still pending: Supabase URL + anon key, schema execution, owner row, auditor approvals, v2 browser backup exports, owner/accountant reconciliation sign-off, security review/restore drill.

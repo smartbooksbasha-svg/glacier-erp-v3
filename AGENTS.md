@@ -11,8 +11,10 @@ Cloud-ready responsive ERP for a packaged water manufacturer. Built from RDP v3.
 - `src/lib/calc.ts` owns integer-paise GST math, case/bottle conversion and stock rules.
 - `src/lib/printDocs.ts` renders A4 GST tax invoices and 80 mm thermal receipts from invoice rows + company config.
 - `src/lib/upload.ts` compresses images and saves file fields locally with a private Storage path for later Supabase upload.
-- `src/lib/modules.ts` defines all ERP modules and field schemas; `ModulePage.tsx` renders generic list/form/post/cancel UI, file inputs and per-row invoice print buttons.
-- `src/pages/Admin.tsx` handles cloud setup, company/tax setup, users, audit, backups and migration notes.
+- `src/lib/fefo.ts` suggests earliest-expiry QC-released batches and calculates dispatch qty from cases + loose bottles.
+- `src/lib/costing.ts` computes standard-vs-actual batch cost; only approved variances feed P&L / balance-sheet working papers.
+- `src/lib/modules.ts` defines all ERP modules and field schemas; `ModulePage.tsx` renders generic list/form/post/cancel UI, file inputs, per-row invoice print buttons and FEFO dispatch suggestions.
+- `src/pages/Admin.tsx` handles cloud setup, company/tax setup, users, audit, backups, approval register, reconciliation sign-off, health check and launch/training note.
 
 ## Commands
 - `npm install` — install deps.
@@ -28,7 +30,8 @@ Cloud-ready responsive ERP for a packaged water manufacturer. Built from RDP v3.
 ## State
 - Foundation build complete and live in local demo mode at `https://smartbooksbasha-svg.github.io/glacier-erp-v3/`.
 - 2026-11-25 follow-up: A4 GST invoice + 80 mm receipt and attachment upload added.
-- `npm test`: 22/22 green. `npm run build`: green. Live assets verified 200.
+- 2026-11-25 "ji pendings sab kardu": FEFO + QC gate, costing + statements, approval/reconciliation/health UI and mobile quick-action bar added.
+- `npm test`: 27/27 green. `npm run build`: green.
 - PostgreSQL schema is in `src/lib/schema.sql` but not executed; no Supabase credentials supplied.
-- Blockers for full cloud go-live: Supabase URL + anon key, auditor approvals, v2 browser backup exports, owner/accountant sign-off.
+- Blockers for full cloud go-live: Supabase URL + anon key, schema execution, owner row, auditor approvals, v2 browser backup exports, owner/accountant sign-off, security review/restore drill.
 - Check `TASK.md` for exact done vs pending acceptance items.
