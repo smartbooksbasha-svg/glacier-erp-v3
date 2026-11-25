@@ -35,4 +35,5 @@ Cloud-ready responsive ERP for a packaged water manufacturer. Built from RDP v3.
 - PostgreSQL schema is in `src/lib/schema.sql` but not executed; no Supabase credentials supplied.
 - Blockers for full cloud go-live: Supabase URL + anon key (2026-11-25: Shan ne bataya anon key Khan ke paas hai), schema execution, owner row, auditor approvals, v2 browser backup exports, owner/accountant sign-off, security review/restore drill.
 - Supabase anon key public-by-design hai; Project URL ke saath Supabase Dashboard → Project Settings → API se milta hai. Service_role key frontend me kabhi na daalein.
+- 2026-11-25: Shan ne Supabase project ref `yipxzbgqtyvfllrpqehs` diya → derived URL `https://yipxzbgqtyvfllrpqehs.supabase.co`. Ye ref Masjid Kidmat Records project ka bhi hai; `public.app_users` collide karega. Glacier schema ko is existing project me execute na karein jab tak alag schema/prefix ya naya Supabase project finalize na ho. Anon key abhi bhi Khan ke paas hai.
 - Check `TASK.md` for exact done vs pending acceptance items.

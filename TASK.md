@@ -58,6 +58,7 @@ PRD / plan source: `RDP-v3.0-source.pdf` (8 pages) and `/data/data/com.termux/fi
 - App works in local demo mode before credentials are entered; cloud setup is entered in-app (URL + anon key only).
 - Money = integer paise everywhere; display with Indian formatting.
 - Stock = opening + posted inward − posted outward; never direct balance overwrite.
+- 2026-11-25: Supabase project ref `yipxzbgqtyvfllrpqehs` received; already used by Masjid Kidmat Records with a `public.app_users` table. Glacier schema also uses `public.app_users` → collision; use a new project or isolated `gws_` schema before executing. Anon key is still with Khan.
 - FEFO dispatch posts only QC `Released` batches; non-FEFO-first selection requires an override reason.
 - Costing/financial statements are working papers until auditor/owner approval and opening balances are signed off; only approved variances feed totals.
 - v3 live URL: `https://smartbooksbasha-svg.github.io/glacier-erp-v3/`.
