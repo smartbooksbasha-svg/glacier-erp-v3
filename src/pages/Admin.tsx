@@ -4,7 +4,7 @@ import { formatMoney } from '../lib/calc';
 import { approvalsComplete, getApprovals, getCloudConfig, getCompanyConfig, getReconciliation, hasCloudConfig, reconciliationComplete, setApprovals as saveApprovals, setCloudConfig, setCompanyConfig, setReconciliation as saveReconciliation } from '../lib/config';
 import { currentUser } from '../lib/auth';
 import { downloadText, exportCsv, exportJson } from '../lib/exports';
-import { exportAll, listRows, importAll, resetSupabaseClient, supabaseClient } from '../lib/store';
+import { exportAll, listRows, importAll, resetSupabaseClient } from '../lib/store';
 import schemaSql from '../lib/schema.sql?raw';
 import type { Role, Row } from '../lib/types';
 
@@ -43,12 +43,20 @@ export function Admin({ role, actor }: { role: Role; actor: string }) {
     checks.push({ label: 'Device storage', ok: storageOk, note: storageOk ? 'Writable' : 'Browser blocked storage' });
     const swOk = 'serviceWorker' in navigator;
     checks.push({ label: 'Offline support', ok: swOk, note: swOk ? 'Service worker supported' : 'No service worker in this browser' });
-    if (cloudReady && supabaseClient()) {
+    const base = cloud.url.replace(/\/$/, '');
+    if (cloudReady && base && cloud.anonKey) {
       try {
-        const { error } = await supabaseClient()!.from('app_users').select('id').limit(1);
-        checks.push({ label: 'PostgreSQL schema', ok: !error, note: error ? error.message : 'app_users responded' });
+        const res = await fetch(`${base}/auth/v1/health`, { headers: { apikey: cloud.anonKey } });
+        checks.push({ label: 'Supabase API', ok: res.ok, note: res.ok ? 'Auth endpoint healthy' : `HTTP ${res.status}` });
+      } catch (e) { checks.push({ label: 'Supabase API', ok: false, note: e instanceof Error ? e.message : 'Unreachable' }); }
+      try {
+        const res = await fetch(`${base}/rest/v1/app_users?select=id&limit=1`, { headers: { apikey: cloud.anonKey } });
+        const body = await res.text();
+        const schemaReachable = res.ok || res.status === 401 || res.status === 403 || body.includes('42501') || body.includes('permission denied');
+        checks.push({ label: 'PostgreSQL schema', ok: schemaReachable, note: schemaReachable ? 'app_users reachable (RLS active)' : `HTTP ${res.status} ${body.slice(0, 80)}` });
       } catch (e) { checks.push({ label: 'PostgreSQL schema', ok: false, note: e instanceof Error ? e.message : 'Unreachable' }); }
     } else {
+      checks.push({ label: 'Supabase API', ok: false, note: 'Not configured in local demo' });
       checks.push({ label: 'PostgreSQL schema', ok: false, note: 'Not executed in local demo' });
     }
     setHealth(checks);

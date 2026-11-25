@@ -1,4 +1,4 @@
-const CACHE = 'gws-v3-1';
+const CACHE = 'gws-v3-2';
 const SHELL = [
   './',
   './index.html',

@@ -58,7 +58,7 @@ PRD / plan source: `RDP-v3.0-source.pdf` (8 pages) and `/data/data/com.termux/fi
 - App works in local demo mode before credentials are entered; cloud setup is entered in-app (URL + anon key only).
 - Money = integer paise everywhere; display with Indian formatting.
 - Stock = opening + posted inward − posted outward; never direct balance overwrite.
-- 2026-11-25 FINAL VERIFIED: Hosted Project URL `https://dkezkckykridrvtjbhzb.supabase.co` (naye email account). Purane `yipxzbgqtyvfllrpqehs`, `rxllxpfkufcldhurwcpv`, `ymyqpehekotofaacipzl` ignore. Publishable key `/auth/v1/health` par 200 — key↔project match. Schema abhi nahi chala (`app_users` 404); SQL Editor / management token zaroori.
+- 2026-11-25 FINAL VERIFIED + SCHEMA DONE: Hosted Project URL `https://dkezkckykridrvtjbhzb.supabase.co` (naye email account). Purane refs ignore. Publishable key `/auth/v1/health` par 200. `src/lib/schema.sql` SQL Editor me chal gaya (`Success. No rows returned`). User ne Admin → Cloud setup bhi complete bataya. Ab owner auth user + `app_users` owner row confirm karna, phir approvals aur migration sign-off.
 - FEFO dispatch posts only QC `Released` batches; non-FEFO-first selection requires an override reason.
 - Costing/financial statements are working papers until auditor/owner approval and opening balances are signed off; only approved variances feed totals.
 - v3 live URL: `https://smartbooksbasha-svg.github.io/glacier-erp-v3/`.
