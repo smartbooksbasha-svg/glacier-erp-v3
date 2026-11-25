@@ -31,7 +31,7 @@ Cloud-ready responsive ERP for a packaged water manufacturer. Built from RDP v3.
 - Foundation build complete and live in local demo mode at `https://smartbooksbasha-svg.github.io/glacier-erp-v3/`.
 - 2026-11-25 follow-up: A4 GST invoice + 80 mm receipt and attachment upload added.
 - 2026-11-25 "ji pendings sab kardu": FEFO + QC gate, costing + statements, approval/reconciliation/health UI and mobile quick-action bar added.
-- `npm test`: 27/27 green. `npm run build`: green.
+- `npm test`: 27/27 green. `npm run build`: green. Commit `56e80e9` pushed and live assets verified (`index-4mnuexMN.js`, `index-DZBmw4NL.css`).
 - PostgreSQL schema is in `src/lib/schema.sql` but not executed; no Supabase credentials supplied.
 - Blockers for full cloud go-live: Supabase URL + anon key, schema execution, owner row, auditor approvals, v2 browser backup exports, owner/accountant sign-off, security review/restore drill.
 - Check `TASK.md` for exact done vs pending acceptance items.

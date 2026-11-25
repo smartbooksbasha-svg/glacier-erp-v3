@@ -64,9 +64,9 @@ PRD / plan source: `RDP-v3.0-source.pdf` (8 pages) and `/data/data/com.termux/fi
 
 ## Verification record
 - `npm test`: 27/27 green (calc, posting/reversal/idempotency, UI login/nav/roles + mobile quick actions, A4/80 mm invoice print, attachment fields, FEFO, costing, approval/reconciliation gates).
-- `npm run build`: green, hashed chunks emitted.
-- Live assets after print/attachments verified 200: `/`, `/index.html`, `assets/index-BTJKE4IS.js`, `assets/index-BX4hAJVX.css`, `sw.js`.
+- `npm run build`: green, hashed chunks emitted (`assets/index-4mnuexMN.js`, `assets/index-DZBmw4NL.css`).
+- Commit `56e80e9 Complete remaining ERP pendings` pushed; Pages deploy verified after 45s: `/` 200, new JS/CSS 200, `sw.js` 200; live index references the new hashes.
 - PostgreSQL schema file is written but NOT executed (no Supabase credentials supplied).
 
 ## NOW
-All code-side pendings from the "ji pendings sab kardu" instruction are implemented: FEFO + QC gate, costing + statements, approval/reconciliation/health UI, mobile quick actions. `npm test` 27/27 and build are green; commit/deploy/live verification is the current step. External go-live inputs still pending: Supabase URL + anon key, schema execution, owner row, auditor approvals, v2 browser backup exports, owner/accountant reconciliation sign-off, security review/restore drill.
+All code-side pendings from the "ji pendings sab kardu" instruction are implemented, committed, pushed and live-verified: FEFO + QC gate, costing + statements, approval/reconciliation/health UI, mobile quick actions. External go-live inputs still pending: Supabase URL + anon key, schema execution, owner row, auditor approvals, v2 browser backup exports, owner/accountant reconciliation sign-off, security review/restore drill.
