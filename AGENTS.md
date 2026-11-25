@@ -33,5 +33,6 @@ Cloud-ready responsive ERP for a packaged water manufacturer. Built from RDP v3.
 - 2026-11-25 "ji pendings sab kardu": FEFO + QC gate, costing + statements, approval/reconciliation/health UI and mobile quick-action bar added.
 - `npm test`: 27/27 green. `npm run build`: green. Commit `56e80e9` pushed and live assets verified (`index-4mnuexMN.js`, `index-DZBmw4NL.css`).
 - PostgreSQL schema is in `src/lib/schema.sql` but not executed; no Supabase credentials supplied.
-- Blockers for full cloud go-live: Supabase URL + anon key, schema execution, owner row, auditor approvals, v2 browser backup exports, owner/accountant sign-off, security review/restore drill.
+- Blockers for full cloud go-live: Supabase URL + anon key (2026-11-25: Shan ne bataya anon key Khan ke paas hai), schema execution, owner row, auditor approvals, v2 browser backup exports, owner/accountant sign-off, security review/restore drill.
+- Supabase anon key public-by-design hai; Project URL ke saath Supabase Dashboard → Project Settings → API se milta hai. Service_role key frontend me kabhi na daalein.
 - Check `TASK.md` for exact done vs pending acceptance items.
