@@ -1,0 +1,674 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,top=2cm,bottom=2cm,left=1.8cm,right=1.8cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{tabularx,array,longtable}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{fancyvrb}
+\usepackage{url}
+\usepackage{titlesec}
+\usepackage[hidelinks]{hyperref}
+\sloppy
+\setlength{\emergencystretch}{3em}
+\definecolor{headnavy}{HTML}{0F2B3A}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+\renewcommand{\arraystretch}{1.25}
+\titleformat{\section}{\Large\bfseries\color{headnavy}}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\large\bfseries\color{headnavy}}{\thesubsection}{0.5em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries}{\thesubsubsection}{0.5em}{}
+\begin{document}
+\begin{titlepage}
+\centering
+\vspace*{4cm}
+{\Huge\bfseries\color{headnavy} Glacier Water Solutions ERP v3.0 - Full RDP and Build Record\par}
+\vspace{16pt}
+{\large \textbf{Project:} Glacier Water Solutions - packaged drinking water manufacturer, sole proprietorship.\par}
+{\large \textbf{Document:} Full Requirements and Development Plan, combining the supplied RDP v3.0 with the implemented build record.\par}
+{\large \textbf{Date:} 25 November 2026.\par}
+{\large \textbf{Status:} Cloud-backed ERP built and running in demo mode; Supabase schema executed; cloud setup reported complete; owner row, approvals and migration sign-off still pending.\par}
+\vspace{18pt}
+{\large 25 November 2026.\par}
+\vfill
+\end{titlepage}
+\tableofcontents
+
+\textbf{Project:} Glacier Water Solutions - packaged drinking water manufacturer, sole proprietorship. \textbf{Document:} Full Requirements and Development Plan, combining the supplied RDP v3.0 with the implemented build record. \textbf{Date:} 25 November 2026. \textbf{Status:} Cloud-backed ERP built and running in demo mode; Supabase schema executed; cloud setup reported complete; owner row, approvals and migration sign-off still pending. \textbf{Prepared for:} Owner, accountant, GST auditor and developer.
+\clearpage
+\section{1. Executive summary}
+Glacier Water Solutions ERP v3.0 is a responsive, cloud-backed workplace for daily water factory operations. It combines simple My BillBook style billing with traceable inventory, production, quality, delivery and accounts.
+The owner supplied an 8 page RDP v3.0 and asked for the complete website to be built. The earlier RDP v2.0 described a static local-first PWA on GitHub Pages. V2 remains live as a read-only archive. V3 uses a new repository and a new live URL so the archive is not overwritten.
+The current build is a React, TypeScript and Vite PWA with a managed Supabase backend. Supabase provides the shared PostgreSQL database, authentication, row level security and private file storage that the RDP asked for in a Node and TypeScript REST API. The app also runs in local demo mode before cloud credentials are entered.
+Cloud status as of this document: the final project URL is verified, the publishable key matches the project, the full SQL schema has been executed, and the owner reported that Admin to Cloud setup is complete. The remaining work is to confirm the owner authentication user and owner row, collect auditor approvals, reconcile v2 browser backups, complete security and restore tests, and hand over training.
+\clearpage
+\section{2. Source RDP baseline and project decision}
+This plan is based on the supplied 17 page RDP v2.0, the owner decisions in v3.0, and the implementation completed on 25 November 2026.
+\subsection{2.1 Decisions carried into v3}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item Database: cloud-hosted shared database.
+\item Platform: responsive website for mobile and desktop.
+\item Scope: complete water manufacturing ERP plus My BillBook style billing.
+\item Business structure: sole proprietorship.
+\item Document date: 25 November 2026.
+\end{itemize}
+\subsection{2.2 V2 baseline}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item V2 was a static local-first PWA on GitHub Pages with records in browser localStorage, JSON backup and PDF, Excel and CSV exports.
+\item V2 reported 77 jsdom assertions and live asset checks. Those checks do not prove shared cloud storage, production security, GST compliance or successful data recovery.
+\item Migration must preserve every existing browser or device data set. Do not clear browser storage, uninstall the PWA or overwrite old data before export and reconciliation.
+\item GSTIN, registered address, state, HSN, tax rates, prices and opening balances remain pending auditor and owner approval.
+\end{itemize}
+\subsection{2.3 Implemented answer to the RDP}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item New repository: \texttt{smartbooksbasha-svg/glacier-erp-v3}.
+\item Live app: \path{https://smartbooksbasha-svg.github.io/glacier-erp-v3/}
+\item V2 archive: \path{https://smartbooksbasha-svg.github.io/glacier-water-solutions/}
+\item Backend: Supabase managed PostgreSQL, Auth, RLS and Storage.
+\item Frontend: React, TypeScript, Vite PWA.
+\item Cloud project: \path{https://dkezkckykridrvtjbhzb.supabase.co}, project ref \texttt{dkezkckykridrvtjbhzb}.
+\item The publishable key is public by design and is stored outside the repository. No service role or secret key is used in the frontend.
+\end{itemize}
+\clearpage
+\section{3. Scope, goals and exclusions}
+\subsection{3.1 Goals}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item One shared source of truth across authorized devices and users.
+\item Accurate bottle and case stock from a movement ledger, not manually edited balances.
+\item Production batch tracking, raw material usage, rejects, expiry and quality release.
+\item Customer and supplier balances, cash, bank, expenses, capital, drawings and financial reports.
+\item Auditor-ready exports with clear status and approval history.
+\end{itemize}
+\subsection{3.2 Not in initial launch}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item Native mobile app.
+\item Payment gateway.
+\item Automatic bank feeds.
+\item Direct GST portal filing.
+\item E-invoice and e-waybill APIs.
+\item Multi-company SaaS.
+\item Advanced route optimization.
+\end{itemize}
+\clearpage
+\section{4. Users and permissions}
+Permissions are enforced by the backend for every view, create, edit, approve, post, cancel and export action. Hiding a menu item is not security.
+\begin{center}\small\begin{tabularx}{\linewidth}{|*{3}{>{\raggedright\arraybackslash}X|}}
+\hline
+\textbf{Role} & \textbf{Access} & \textbf{Restrictions} \\
+\hline
+Owner or Super Admin & All modules, settings, users, approvals, month close and reopen, backups and audit & All actions logged, no silent deletion \\
+\hline
+Admin or Operations & Sales, purchase, inventory, production, QC, delivery, expenses and operational reports & No owner or security administration \\
+\hline
+Accountant & Invoices, receipts, payments, ledgers, GST working reports, reconciliation and exports & No user administration unless explicitly granted \\
+\hline
+Sales Staff & Customer lookup, quotations, orders, sales entry and permitted collections & No cost, profit, capital or full accounts by default \\
+\hline
+Production Staff & Production batches, material use, QC and assigned stock tasks & No sales pricing or financial ledgers by default \\
+\hline
+Read-only Auditor & View approved registers, ledgers, attachments and exports & Cannot create, edit, post, cancel or restore \\
+\hline
+\end{tabularx}\end{center}
+The implemented app uses these six roles: owner, admin, accountant, sales, production and auditor. The owner email is fixed as \texttt{smartbooksbasha@gmail.com}.
+\clearpage
+\section{5. Navigation and UI}
+\begin{center}\small\begin{tabularx}{\linewidth}{|*{2}{>{\raggedright\arraybackslash}X|}}
+\hline
+\textbf{Navigation} & \textbf{Screens} \\
+\hline
+Overview & Dashboard, alerts, tasks, daily closing \\
+\hline
+Sales & Invoices, quotations, sales orders, challans, returns, receipts, statements \\
+\hline
+Purchase & Purchase orders, goods receipt, bills, purchase returns, supplier payments \\
+\hline
+Inventory & Finished goods, raw materials, stock ledger, counts, adjustments, batches, expiry \\
+\hline
+Manufacturing & Production plan, BOM or recipe, batches, consumption, rejects, costing \\
+\hline
+Quality & Water tests, QC approvals, non-conformance, batch hold and release \\
+\hline
+Delivery & Dispatch, driver and vehicle, delivery status, proof of delivery, returnables \\
+\hline
+Accounts & Cash, bank, expenses, journals, ledgers, capital, drawings, fixed assets \\
+\hline
+Reports & Sales, purchase, stock, production, QC, delivery, GST working, P and L, balance sheet \\
+\hline
+Administration & Users, roles, company, tax setup, invoice templates, audit, backup \\
+\hline
+\end{tabularx}\end{center}
+UI requirements:
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item Mobile-first responsive layout, usable at 360 to 375 px widths without page-level horizontal overflow.
+\item Desktop sidebar and mobile drawer or bottom quick actions.
+\item Search, filters and keyboard-friendly invoice entry.
+\item Large touch targets, visible focus states, clear error messages and confirmation before posting.
+\item Status labels: Draft, Pending Approval, Posted, Part-paid, Paid, Cancelled, Returned and Held.
+\end{itemize}
+Implemented UI notes:
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item Glacier cool slate and cyan design, Space Grotesk and Work Sans, inline Lucide style SVG icons.
+\item Desktop sidebar, mobile drawer and a role-aware mobile quick action bar.
+\item Module screens are generated from the shared module registry so all groups are reachable and consistent.
+\end{itemize}
+\clearpage
+\section{6. Masters and product rules}
+\begin{center}\small\begin{tabularx}{\linewidth}{|*{3}{>{\raggedright\arraybackslash}X|}}
+\hline
+\textbf{Product} & \textbf{Default pack} & \textbf{Stock base} \\
+\hline
+300 ml PET & 30 bottles per case & Bottle and case \\
+\hline
+500 ml PET & 24 bottles per case & Bottle and case \\
+\hline
+1000 ml PET & 24 bottles per case & Bottle and case \\
+\hline
+\end{tabularx}\end{center}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item Product master supports finished goods, raw materials, packaging, consumables, services and non-stock items.
+\item Units and conversions are configurable and versioned. Case quantity converts exactly to bottles and displays cases plus loose bottles.
+\item MRP, sale price, purchase price, HSN and GST rate are not hard-coded. They must be maintained with effective dates and approval status.
+\item Retail, wholesale, distributor and customer-specific price lists with controlled discounts are part of the target design.
+\end{itemize}
+Implemented status:
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item Default conversion rules are in the calculation layer.
+\item Configurable price lists and effective-dated price approval remain a future refinement; current company tax and price settings are in Administration.
+\end{itemize}
+\clearpage
+\section{7. Sales, billing and customer management}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item Quotation to sales order to invoice or challan workflow, converting documents without retyping items.
+\item Invoice fields: unique series and number, date, customer, billing and shipping address, GSTIN if applicable, place of supply, item, HSN, unit, quantity, rate, discount, taxable value, tax breakup, freight, charges, round-off and grand total.
+\item Payment modes: cash, UPI, bank, cheque, credit and split payments. Part payment, due dates and receipt allocation.
+\item Draft invoices do not affect stock or accounts. Posting atomically creates stock issue and customer receivable or payment entries.
+\item Print A4 invoice and 80 mm thermal receipt, plus PDF download, share and invoice history.
+\item Sales returns, credit notes, customer statements, outstanding aging, overdue reminders and customer rate history.
+\item Invoice number is never reused after cancellation. Cancellation creates a reversal and reason; posted records are not silently deleted.
+\end{itemize}
+Implemented status:
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item Sales modules: customers, quotations, sales orders, challans, invoices, receipts, returns and credit notes.
+\item Integer paise GST math computes taxable value, CGST and SGST or IGST, freight, round-off and grand total.
+\item Posting uses stock issues, ledger entries, posting references and reversals.
+\item A4 GST tax invoice and 80 mm thermal receipt print are implemented in \texttt{src/lib/printDocs.ts}.
+\end{itemize}
+\clearpage
+\section{8. Purchase and supplier management}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item Purchase order to goods receipt to supplier bill. Direct bill entry is allowed for small purchases.
+\item Capture supplier bill number and date, GSTIN, items, unit, quantity, rate, discount, freight, tax and total.
+\item Track partial receipts and prevent duplicate stock posting when PO, GRN and bill are linked.
+\item Attach supplier invoice scans or PDFs, maintain supplier ledger, due dates, payment allocation and aging.
+\item Purchase return or debit note records returned quantity, reason, supplier credit and stock reversal.
+\end{itemize}
+Implemented status:
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item Purchase modules: suppliers, purchase orders, GRN, bills, payments, returns and debit notes.
+\item Attachment fields are ready for bill scans and private Storage paths.
+\item PO does not receive stock and GRN does not post accounts by themselves; stock posting happens through defined movements.
+\end{itemize}
+\clearpage
+\section{9. Inventory and stock control}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item Separate finished goods, raw materials, packaging, damaged, expired, QC held stock and optional locations.
+\item Immutable stock ledger movements: opening, purchase receipt, production receipt, sale issue, material use, return, transfer, damage, expiry and adjustment.
+\item Current stock is opening plus posted inward movements minus posted outward movements. No direct balance overwrite.
+\item Physical stock count workflow: count sheet, variance, reason, approval and adjustment.
+\item Batch-wise stock with manufacturing and expiry dates, QC status, reorder alerts, stock valuation and stock aging.
+\item FEFO dispatch suggestion for expiry controlled stock. Override requires reason and permission.
+\item Negative stock is blocked by default. Controlled exception is only by authorized owner with audit trail.
+\end{itemize}
+Example conversion:
+\begin{center}\small\begin{tabularx}{\linewidth}{|*{4}{>{\raggedright\arraybackslash}X|}}
+\hline
+\textbf{Product} & \textbf{Cases} & \textbf{Loose bottles} & \textbf{Total bottles} \\
+\hline
+300 ml & 100 & 15 & 3015 \\
+\hline
+500 ml & 80 & 10 & 1930 \\
+\hline
+1000 ml & 50 & 12 & 1212 \\
+\hline
+\end{tabularx}\end{center}
+Implemented status:
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item Stock is derived from posted movements in \texttt{src/lib/store.ts}.
+\item \texttt{src/lib/fefo.ts} suggests earliest-expiry QC released batches and calculates dispatch quantity from cases plus loose bottles.
+\item Dispatch errors are explicit: select a batch, only QC released batches can be dispatched, and non-FEFO-first override needs a reason.
+\end{itemize}
+\clearpage
+\section{10. Manufacturing and production}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item Production plan by date, shift, product and target output.
+\item Batch record includes batch number, line or shift, operator, start and end time, good output, rejected output, rework and notes.
+\item BOM defines expected bottles, caps, labels, cartons and other material per case or unit.
+\item Record actual consumption, variance, wastage and reason. Compare standard versus actual.
+\item Posting a batch debits raw materials and credits good finished goods. Rejected output is segregated and not saleable until disposition.
+\item Prevent duplicate posting. Posted batch edits require reversal and repost with approval.
+\item Dashboard: planned versus actual output, yield, rejection, material variance and output by size or shift.
+\item Costing distinguishes direct material, labour, electricity and utilities, rent and overhead. Estimated and actual costs are clearly labelled. Accountant approves costing policy.
+\end{itemize}
+Implemented status:
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item Manufacturing modules: BOM, plans, batches, consumption, outputs, rejects and costing.
+\item \texttt{src/lib/costing.ts} computes standard and actual cost and produces P and L and balance sheet working papers.
+\item Variances feed totals only after approval; before that they are working papers.
+\end{itemize}
+\clearpage
+\section{11. Quality control and batch traceability}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item Batch-wise test record: sample ID, date and time, parameter, measured value, unit, specification, result, tester and reviewer.
+\item Configurable quality parameters may include TDS, pH and other tests required by the approved quality plan. These alone do not establish regulatory compliance.
+\item Batch statuses: Awaiting QC, Released, On Hold and Rejected. Only released batches may be dispatched if company policy requires.
+\item Attach lab reports, record equipment calibration or service, non-conformance and corrective action.
+\item Trace dispatched stock back to production batch and raw material lots where available.
+\item Required tests, limits, licences and label declarations must be confirmed by the appropriate compliance professional.
+\end{itemize}
+Implemented status:
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item Quality modules: tests, results, approvals, non-conformance and corrective actions.
+\item QC approval is a hard release gate; FEFO dispatch will not select a batch that is not released.
+\item Attachment fields support lab reports with compressed local demo files and private Storage paths for cloud.
+\end{itemize}
+\clearpage
+\section{12. Delivery and distribution}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item Create dispatch from order, invoice or challan. Reserve stock and prevent dispatch above available quantity.
+\item Record delivery date and address, cases and loose bottles, driver, vehicle, route, delivery status and charges.
+\item Statuses: Pending, Packed, Dispatched, Delivered, Part-delivered, Failed and Returned.
+\item Capture proof of delivery by signature, photo or file, plus collection and delivery expenses.
+\item If reusable crates or empty bottles are used, maintain customer-wise issued, returned and deposit balances.
+\item Daily delivery sheet and route, driver or salesperson-wise sales and collection reports.
+\end{itemize}
+Implemented status:
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item Delivery modules: dispatches, drivers, vehicles, delivery events, POD and returnables.
+\item POD attachment field is implemented.
+\item Dispatch posting checks stock, batch, QC status and FEFO override reason.
+\end{itemize}
+\clearpage
+\section{13. Accounts and financial controls}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item Customer and supplier sub-ledgers linked to invoices, credit or debit notes, receipts and payments.
+\item Cash book, bank book, transfers, deposits, withdrawals, opening and closing balances and bank reconciliation by CSV statement import.
+\item Expense vouchers with category, payee, date, mode, tax fields where relevant and proof attachment.
+\item Proprietor capital, additional capital and drawings are separate from business expenses.
+\item Fixed asset register with machinery or equipment, purchase date, cost, evidence, location, useful life, depreciation policy and disposal.
+\item Journal vouchers with debit and credit validation, narration, reference and approval.
+\item Trial balance, P and L, balance sheet and management cash summary depend on correct opening balances and accounting setup.
+\item Month close locks postings. Authorized reopen requires reason and audit entry.
+\end{itemize}
+Implemented status:
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item Accounts modules: cash, bank, expenses, journals, ledgers, capital, drawings, assets and depreciation.
+\item Month lock is implemented with owner-only controls.
+\item Financial statements are working papers until opening balances and auditor setup are approved.
+\end{itemize}
+\clearpage
+\section{14. GST and auditor handover}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item Company GSTIN, legal name, address, state, place of supply, HSN or SAC and tax rates are configurable master data.
+\item Support CGST and SGST or IGST according to auditor-approved place-of-supply rules. Support tax-inclusive and tax-exclusive pricing.
+\item Maintain sales, purchase, credit and debit note registers, tax summaries and input-tax working records.
+\item Capture supplier GSTIN, invoice data and ITC eligibility or reconciliation status for accountant review. Never assume all purchase tax is eligible ITC.
+\item Auditor export pack: sales, purchases, expenses, HSN summary, tax summary, ledgers and attachment index.
+\item Optional GSTR-2B import and matching workflow with matched, unmatched and review-needed status.
+\item No claim of GST portal filing, e-invoice or e-waybill unless separately integrated, tested and approved.
+\end{itemize}
+Important note: GST rates, HSN, ITC eligibility, registration particulars, invoice format and statutory applicability must be approved by the company GST auditor. Reports are working papers, not tax advice.
+Implemented status:
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item Tax math handles inclusive and exclusive prices, CGST and SGST versus IGST, round-off and reversals.
+\item Reports and auditor export pack are implemented.
+\item GSTIN, address, HSN and rates are still unapproved; the app must visibly mark these as pending until sign-off.
+\end{itemize}
+\clearpage
+\section{15. Reports and dashboard}
+\begin{center}\small\begin{tabularx}{\linewidth}{|*{2}{>{\raggedright\arraybackslash}X|}}
+\hline
+\textbf{Area} & \textbf{Reports} \\
+\hline
+Sales & Daily and monthly, item, customer and salesperson-wise, returns, invoice register, payment modes \\
+\hline
+Purchase & Supplier, item and tax-wise, pending PO and GRN, purchase returns \\
+\hline
+Inventory & Current stock, movement ledger, valuation, batch and expiry, damage, reorder, count variance \\
+\hline
+Production & Daily and shift output, batch register, yield, rejects, consumption and variance \\
+\hline
+Quality & Test register, batch release or hold or reject, exceptions, corrective actions \\
+\hline
+Delivery & Dispatch, pending delivery, route and driver, POD, returns and crate balances \\
+\hline
+Accounts & Cash and bank, receipts and payments, aging, expenses, journals, trial balance, P and L, balance sheet \\
+\hline
+GST working & Registers, tax summary, HSN, credit and debit notes, 2B matching \\
+\hline
+Management & Product margin, month comparison, outstanding, cash position and operational KPIs \\
+\hline
+\end{tabularx}\end{center}
+Common requirements: date filters, search, sorting and drill-down to source transaction. PDF, XLSX and CSV exports must match on-screen totals. The dashboard is permission-aware; staff must not see cost or profit figures without permission.
+Implemented status: register reports, GST working, stock, costing and financial statements are in \texttt{src/pages/Reports.tsx}; JSON, CSV, Excel XML pack and print export are implemented.
+\clearpage
+\section{16. Technical architecture}
+\begin{center}\small\begin{tabularx}{\linewidth}{|*{3}{>{\raggedright\arraybackslash}X|}}
+\hline
+\textbf{Layer} & \textbf{Target requirement} & \textbf{Implemented response} \\
+\hline
+Frontend & React, TypeScript, Vite, responsive PWA, accessible UI & React, TypeScript, Vite PWA with glacier design and role-aware shell \\
+\hline
+Backend & Node and TypeScript REST API or documented equivalent & Supabase managed Postgres, Auth, RLS and Storage \\
+\hline
+Database & Managed cloud PostgreSQL with constraints, indexes, migrations and transactions & \texttt{src/lib/schema.sql} with tables, enums, constraints, triggers and RLS \\
+\hline
+Authentication & Server-managed sessions or secure tokens, strong hashing & Supabase Auth, local demo fallback, lockout after failed attempts \\
+\hline
+Files & Private object storage with permission-checked access & Private Storage path plus compressed local demo files \\
+\hline
+Hosting & HTTPS frontend and backend, staging and production & GitHub Pages frontend; cloud backend on Supabase \\
+\hline
+Backup & Automated encrypted database backups, retention and restore drills & Supabase backups plus app JSON, CSV, Excel and auditor pack exports; restore drill pending \\
+\hline
+Monitoring & Error logs, health checks and database monitoring & App health check and Supabase project logs; production monitoring pending \\
+\hline
+\end{tabularx}\end{center}
+Rules:
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item Browser is a client only. Server validates totals, tax, stock, balances, permissions and audit writes.
+\item Invoice posting and stock or account entries use a database transaction. All succeed or all roll back.
+\item Idempotency and unique posting references prevent duplicate submissions on weak mobile networks.
+\item Secrets and database credentials must never be placed in frontend code or public repositories.
+\item Timestamps are stored consistently and displayed in India local time, Asia and Kolkata.
+\end{itemize}
+Honest limitation: the deployed frontend is static GitHub Pages, so browser-side calculation exists for demo mode. The RDP wants server-side calculation as the production authority. Supabase RLS and constraints are in place; full server-side business-rule functions are a production hardening item.
+\clearpage
+\section{17. Core database entities}
+\begin{center}\small\begin{tabularx}{\linewidth}{|*{2}{>{\raggedright\arraybackslash}X|}}
+\hline
+\textbf{Domain} & \textbf{Indicative entities} \\
+\hline
+Organization & company, financial year, locations, settings, invoice sequences \\
+\hline
+Identity & users, roles, permissions, user roles, sessions, login events \\
+\hline
+Masters & products, units, conversions, price lists, customers, suppliers, expense categories, tax codes \\
+\hline
+Sales & quotations, orders, invoices, lines, receipts, allocations, returns, credit notes \\
+\hline
+Purchase & purchase orders, goods receipts, bills, lines, supplier payments, returns, debit notes \\
+\hline
+Inventory & locations, openings, stock movements, counts, adjustments, batches, lots \\
+\hline
+Manufacturing & BOMs, BOM lines, plans, batches, consumptions, outputs, scrap \\
+\hline
+Quality & QC tests, results, approvals, non-conformance, corrective actions, attachments \\
+\hline
+Delivery & dispatches, dispatch lines, delivery events, vehicles, drivers, POD, returnables \\
+\hline
+Accounting & accounts, journals, journal lines, cash and bank, reconciliations, fixed assets, depreciation \\
+\hline
+Governance & audit logs, attachments, month locks, backup logs, import jobs, export jobs \\
+\hline
+\end{tabularx}\end{center}
+Every transaction needs a stable ID, business date, timestamps, creator, status, reference and audit trail. Use foreign keys and unique constraints for invoice numbers and posting references.
+\clearpage
+\section{18. Security, privacy and resilience}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item HTTPS, secure cookies, CSRF protection where applicable, rate limits and login throttling.
+\item Argon2id or bcrypt with suitable parameters. Never store plaintext passwords.
+\item Server-side authorization on every API endpoint, least-privilege roles and access review.
+\item Append-only audit log for normal users: actor, action, record, time, before and after summary and reason.
+\item Encrypt backups and private attachments. Define retention and restricted download access.
+\item Daily backup and periodic restore test. Document recovery point and time objectives.
+\item Poor network handling must not display unconfirmed drafts as posted. Retries must not duplicate entries.
+\item Document privacy, retention, offboarding and incident response.
+\end{itemize}
+Implemented status:
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item Supabase RLS policies are role-aware.
+\item Login lockout is implemented.
+\item Publishing and audit logs are implemented.
+\item Restore drill, production monitoring and formal incident response are pending.
+\end{itemize}
+\clearpage
+\section{19. Migration from RDP v2}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item Export JSON backup from every browser or device containing business records. Export Excel and CSV registers too.
+\item Keep original exports read-only in at least two separate locations. Do not clear browser data or uninstall the old PWA before validation.
+\item Use staging. Inspect schema version, duplicate IDs, missing fields, dates and invoice number conflicts.
+\item Import masters first, then opening balances and historical transactions in controlled sequence.
+\item Reconcile invoice counts and totals, purchase totals, customer and supplier balances, stock by SKU, cash and bank against source exports.
+\item Import opening stock as dated movements. Avoid double-counting with historical transactions.
+\item Record source device, export time, import batch, rejected rows and mapping decisions.
+\item Owner and accountant sign migration reconciliation before cutover. Keep the old local build as a read-only archive.
+\end{itemize}
+V2 explicitly states that data is per browser and JSON backup is the portable copy. A live GitHub Pages URL or successful asset check does not mean data is stored in a shared cloud database.
+\clearpage
+\section{20. Delivery phases and release gates}
+\begin{center}\small\begin{tabularx}{\linewidth}{|*{3}{>{\raggedright\arraybackslash}X|}}
+\hline
+\textbf{Phase} & \textbf{Deliverables} & \textbf{Exit gate} \\
+\hline
+0 Discovery and protection & Inspect code and data, export backups, confirm rules and auditor setup & Scope approved and backups verified \\
+\hline
+1 Cloud foundation & Cloud DB, API, auth, roles, audit, migrations, backup and restore & Two devices share test data and restore works \\
+\hline
+2 Masters and billing & Company and masters, price lists, quotations, orders, invoices, receipts, print & Invoice and payment tests reconcile \\
+\hline
+3 Purchase and inventory & PO, GRN, bills, returns, ledger, counts, batches and alerts & Stock reconciles for all tested movements \\
+\hline
+4 Production and QC & BOM, batches, consumption, rejects, QC release and traceability & Input and output and batch traceability pass \\
+\hline
+5 Delivery and accounts & Dispatch, POD, returnables, expenses, cash, bank, journals, assets, reports & Ledgers and month close reconcile \\
+\hline
+6 Migration and launch & Import, reconciliation, training, security review, production deployment & Owner and accountant sign-off and restore test \\
+\hline
+\end{tabularx}\end{center}
+Current phase: foundation and implementation complete in demo mode. Phase 0 backup protection and Phase 1 cloud foundation are partly done. Full release gates remain pending because migration, two-device test, restore drill and approvals are not complete.
+\clearpage
+\section{21. Testing and acceptance checklist}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item Create an invoice on one device and see the same posted record on another authorized device.
+\item Concurrent invoice creation cannot duplicate invoice numbers or oversell stock.
+\item Auditor-approved test cases verify discount, tax inclusive and exclusive, CGST and SGST, IGST, round-off, split payments and returns.
+\item Case and bottle conversion is exact and handles loose bottles without silent rounding.
+\item Opening plus posted inward minus posted outward equals closing stock by SKU, location and batch.
+\item Production consumption, good output, rejects and batch status reconcile.
+\item Cancellation and returns reverse balances correctly and preserve original history.
+\item Customer and supplier ledgers reconcile to control accounts. Cash and bank opening plus movements equals closing.
+\item Staff cannot access restricted cost, profit or settings endpoints by direct API request.
+\item Network retries do not double-post. Failed database transactions roll back.
+\item Backup restores into clean staging and record counts and totals are checked.
+\item PDF, XLSX and CSV totals match filtered screen results. A4 and 80 mm print tested.
+\item Core screens work at 375 px mobile width.
+\end{itemize}
+Current automated evidence:
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item V2: 77 jsdom assertions green.
+\item V3: 27 vitest and jsdom assertions green in six suites.
+\item Build: \texttt{tsc --noEmit} and \texttt{vite build} green.
+\item Live asset checks: index, CSS, JS chunks, manifest, icons and service worker returned 200.
+\item These tests do not replace cloud acceptance, migration sign-off or auditor approval.
+\end{itemize}
+\clearpage
+\section{22. Operational controls}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item Define maker and approver for invoices, purchases, stock adjustments, journals and month close.
+\item Daily close: cash count, collections, delivery returns, stock exceptions and pending orders.
+\item Weekly review: overdue receivables, supplier dues, low stock, expiry and production variance.
+\item Month end: bank and cash reconciliation, customer and supplier ledgers, stock, GST working and journals.
+\item Manual adjustment needs reason and reference. High-value adjustment requires approval.
+\item Train users on demo data before production access.
+\end{itemize}
+\clearpage
+\section{23. Go-live information required}
+\begin{center}\small\begin{tabularx}{\linewidth}{|*{2}{>{\raggedright\arraybackslash}X|}}
+\hline
+\textbf{Input} & \textbf{Owner and accountant to provide} \\
+\hline
+Company identity & Exact legal name, registered address, state, GSTIN, contacts and logo \\
+\hline
+GST setup & Approved HSN or SAC, rates, tax rules, invoice series and statutory format \\
+\hline
+Opening balances & Stock by SKU and batch, raw materials, customer and supplier balances, cash, bank, capital and assets \\
+\hline
+Commercial setup & Prices, customer rates, discounts, payment terms and credit limits \\
+\hline
+Manufacturing & BOM or standard consumption, shifts, reject reasons, material units and overhead policy \\
+\hline
+Quality & Required tests, ranges, release authority, record retention and applicable compliance \\
+\hline
+Users & Names, roles, permissions and recovery contacts \\
+\hline
+Hosting & Cloud provider, budget, data region, backup retention and support contact \\
+\hline
+\end{tabularx}\end{center}
+None of these are approved in this document. They must be supplied and signed before production reliance.
+\clearpage
+\section{24. Risks and mitigations}
+\begin{center}\small\begin{tabularx}{\linewidth}{|*{2}{>{\raggedright\arraybackslash}X|}}
+\hline
+\textbf{Risk} & \textbf{Mitigation} \\
+\hline
+Loss of v2 local data & Export and validate all browser backups, retain a read-only archive \\
+\hline
+Incorrect GST setup & Auditor approval and settings visibly marked unapproved until sign-off \\
+\hline
+Duplicate or partial posting & Database transactions, unique references and idempotency \\
+\hline
+Poor connectivity & Draft-safe UI and server-confirmed posting \\
+\hline
+Unauthorized access & Server-side permissions, secure sessions and audit alerts \\
+\hline
+Wrong opening balances & Signed opening balance sheet and reconciliation before launch \\
+\hline
+Backup failure & Automated backup plus restore drills \\
+\hline
+\end{tabularx}\end{center}
+\clearpage
+\section{25. Developer handover}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item Complete source code, repository access, setup instructions and deployment guide.
+\item Database schema, migrations, seed or demo data and API documentation.
+\item Staging and production configuration with secrets managed outside source code.
+\item Role matrix, audit specification, backup and restore runbook and incident procedure.
+\item Automated tests for billing, tax calculations, stock, production, permissions and migration.
+\item A4 and 80 mm invoice templates, report templates and PDF, XLSX and CSV exports.
+\item Migration scripts and reconciliation report from v2.
+\item Owner, admin and accountant user guides, training and support plan.
+\item Known limitations, third-party dependencies, maintenance and support ownership.
+\end{itemize}
+\clearpage
+\section{26. Implemented build record}
+\subsection{26.1 Repositories and deployment}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item V3 repository: \path{https://github.com/smartbooksbasha-svg/glacier-erp-v3}.
+\item V3 live app: \path{https://smartbooksbasha-svg.github.io/glacier-erp-v3/}
+\item V2 archive repository: \path{https://github.com/smartbooksbasha-svg/glacier-water-solutions}.
+\item V2 live archive: \path{https://smartbooksbasha-svg.github.io/glacier-water-solutions/}
+\item Deployment: GitHub Actions workflow to Pages, using \texttt{npm ci}, build and Pages artifact upload.
+\item Vite base path is relative so the app works under the repository subpath.
+\item V3 service worker cache is \texttt{gws-v3-2}.
+\end{itemize}
+\subsection{26.2 Foundation}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item React, TypeScript and Vite project with PWA manifest, icons, self-hosted fonts and offline service worker.
+\item Six roles and a permission-aware shell.
+\item More than 40 ERP modules driven by a shared registry in \texttt{src/lib/modules.ts}.
+\item Generic module list, form, post, cancel, delete and export UI in \texttt{src/pages/ModulePage.tsx}.
+\item Admin screen for cloud setup, company and tax setup, users, audit, backups, approvals, reconciliation, health check and launch note.
+\item Local-first demo fallback with the same adapter API as the Supabase adapter.
+\end{itemize}
+\subsection{26.3 Money and stock rules}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item All money is stored as integer paise. Display uses Indian formatting.
+\item GST math computes inclusive and exclusive taxes, CGST and SGST or IGST, freight, round-off and grand total.
+\item Stock is never stored as a directly edited balance. Current stock is opening plus posted inward movements minus posted outward movements.
+\item Posting and cancellation use stock movements, ledger entries, posting references and reversal records.
+\item Negative stock is blocked on dispatch.
+\item Case and bottle conversion uses exact integers: 300 ml is 30 bottles per case, 500 ml and 1000 ml are 24 bottles per case.
+\end{itemize}
+\subsection{26.4 FEFO, QC and costing}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item \texttt{src/lib/fefo.ts} suggests the earliest-expiry QC released batch.
+\item Dispatch must select a batch. Only released batches can post. Non-FEFO-first choice needs an override reason.
+\item \texttt{src/lib/costing.ts} computes standard and actual cost, variance and working P and L and balance sheet statements.
+\item Costs and statements are marked as working papers until approvals are complete.
+\end{itemize}
+\subsection{26.5 Print and attachments}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item \texttt{src/lib/printDocs.ts} renders A4 GST tax invoice and 80 mm thermal receipt from invoice rows and company config.
+\item \texttt{src/lib/upload.ts} compresses images to 1280 px JPEG at quality 0.72, enforces a 1.5 MB cap, and writes file name and private Storage path fields.
+\item Attachment fields exist for supplier bills, QC lab reports, delivery POD and expense proof.
+\end{itemize}
+\subsection{26.6 Cloud setup and verification}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item Final Supabase URL: \path{https://dkezkckykridrvtjbhzb.supabase.co}.
+\item Project ref: \texttt{dkezkckykridrvtjbhzb}.
+\item Health verification: \texttt{GET /auth/v1/health} returned 200 with the stored publishable key.
+\item Full SQL schema was executed in Supabase SQL Editor. The editor returned \texttt{Success. No rows returned}, which is normal for DDL.
+\item REST verification after execution: core tables returned 42501 or 400 rather than 404, which means they exist and anon access is correctly restricted by grants or column selection.
+\item The owner reported Admin to Cloud setup complete.
+\item The app health check was fixed so anon 401 or 42501 from \texttt{app\_users} is shown as schema reachable with RLS active, not as a failure.
+\item Raw publishable key is kept in a private credentials file with restricted permissions and is never written to the repository or this document.
+\end{itemize}
+\subsection{26.7 Verification evidence}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item V3 tests: 27 passed in 6 files.
+\item Build: TypeScript check and Vite build green.
+\item Latest production JS: \texttt{assets/index-CZ6TTNj4.js}.
+\item Latest production CSS: \texttt{assets/index-DZBmw4NL.css}.
+\item Service worker cache: \texttt{gws-v3-2}.
+\item Live check: index, CSS, JS chunks and service worker returned 200 after deployment.
+\end{itemize}
+\subsection{26.8 Commit record}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item \texttt{0319a82} Build Glacier ERP v3 foundation from RDP.
+\item \texttt{e4a1750} Record v3 verification and pending gates.
+\item \texttt{4024819} Add GST invoice print and attachment uploads.
+\item \texttt{56e80e9} Complete remaining ERP pendings.
+\item \texttt{bd703ae} Record v3 pending-item verification.
+\item \texttt{92b936a} Verify final Supabase project and key.
+\item \texttt{6b39c09} Fix cloud health check and bump cache.
+\end{itemize}
+\clearpage
+\section{27. Current blockers and next actions}
+\subsection{27.1 Blockers}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item Owner authentication user and \texttt{app\_users} owner row are not yet confirmed.
+\item GSTIN, legal address, state, HSN, rates, prices, MRP and opening balances are not approved.
+\item V2 browser backups are not yet exported and reconciled into v3.
+\item Two-device cloud test is not complete.
+\item Restore drill, security review and production monitoring are not complete.
+\item Training and production cutover are not complete.
+\end{itemize}
+\subsection{27.2 Immediate next actions}
+\begin{itemize}[leftmargin=*,itemsep=2pt,topsep=2pt]
+\item Confirm the owner user exists in Supabase Auth and that \texttt{public.app\_users} has an owner row for \texttt{smartbooksbasha@gmail.com}.
+\item Run the app health check and confirm Cloud config, Supabase API and PostgreSQL schema show PASS.
+\item Collect owner and auditor approvals for all go-live inputs.
+\item Export v2 JSON, Excel and CSV backups from every device and keep two read-only copies.
+\item Import masters, opening balances and historical transactions into staging.
+\item Reconcile counts and totals with owner and accountant sign-off.
+\item Run security review, restore drill, two-device test and training.
+\item Only then perform production cutover.
+\end{itemize}
+\clearpage
+\section{28. Final product definition and approvals}
+Glacier Water Solutions ERP v3.0 is a cloud-backed, secure, multi-user, responsive water manufacturing management system. It combines My BillBook style billing simplicity with traceable production, QC, stock, delivery and accounting.
+No live migration or statutory reliance should begin until reconciliation, security testing, backup restoration and auditor approvals are complete.
+\begin{center}\small\begin{tabularx}{\linewidth}{|*{3}{>{\raggedright\arraybackslash}X|}}
+\hline
+\textbf{Approval} & \textbf{Name or signature} & \textbf{Date} \\
+\hline
+Owner or Proprietor & Pending & Pending \\
+\hline
+Accountant or GST Auditor & Pending & Pending \\
+\hline
+Developer or Technical Lead & Pending & Pending \\
+\hline
+\end{tabularx}\end{center}
+Document basis: supplied RDP v3.0, supplied RDP v2.0, owner decisions, implemented code, verification records and cloud setup record dated 25 November 2026.
+\end{document}
