@@ -9,7 +9,9 @@ Cloud-ready responsive ERP for a packaged water manufacturer. Built from RDP v3.
 - Local-first demo fallback: if cloud config is absent, data is stored in browser localStorage with the same adapter API, so the app works before credentials.
 - `src/lib/schema.sql` contains full tables, constraints, RLS policies, role checks and audit triggers.
 - `src/lib/calc.ts` owns integer-paise GST math, case/bottle conversion and stock rules.
-- `src/lib/modules.ts` defines all ERP modules and field schemas; `ModulePage.tsx` renders generic list/form/post/cancel UI for each module.
+- `src/lib/printDocs.ts` renders A4 GST tax invoices and 80 mm thermal receipts from invoice rows + company config.
+- `src/lib/upload.ts` compresses images and saves file fields locally with a private Storage path for later Supabase upload.
+- `src/lib/modules.ts` defines all ERP modules and field schemas; `ModulePage.tsx` renders generic list/form/post/cancel UI, file inputs and per-row invoice print buttons.
 - `src/pages/Admin.tsx` handles cloud setup, company/tax setup, users, audit, backups and migration notes.
 
 ## Commands
@@ -25,7 +27,8 @@ Cloud-ready responsive ERP for a packaged water manufacturer. Built from RDP v3.
 
 ## State
 - Foundation build complete and live in local demo mode at `https://smartbooksbasha-svg.github.io/glacier-erp-v3/`.
-- `npm test`: 16/16 green. `npm run build`: green. Live assets verified 200.
+- 2026-11-25 follow-up: A4 GST invoice + 80 mm receipt and attachment upload added.
+- `npm test`: 22/22 green. `npm run build`: green. Live assets verified 200.
 - PostgreSQL schema is in `src/lib/schema.sql` but not executed; no Supabase credentials supplied.
 - Blockers for full cloud go-live: Supabase URL + anon key, auditor approvals, v2 browser backup exports, owner/accountant sign-off.
 - Check `TASK.md` for exact done vs pending acceptance items.

@@ -26,7 +26,7 @@ PRD / plan source: `RDP-v3.0-source.pdf` (8 pages) and `/data/data/com.termux/fi
   - [x] 2.2 Products, units/conversions, price lists, customers, suppliers.
   - [x] 2.3 Quotations → orders → invoices/challans → returns.
   - [x] 2.4 Receipts, statements and A4 print/PDF via browser dialog.
-  - [ ] 2.5 80 mm thermal receipt template (not yet added).
+  - [x] 2.5 A4 GST tax invoice + 80 mm thermal receipt (per-row print buttons in Invoices).
   - [x] 2.6 Posting: stock issue + customer receivable + audit + idempotency reference.
 - [ ] 3. Purchase/inventory
   - [x] 3.1 PO → GRN → bill; direct bill; purchase returns.
@@ -37,7 +37,8 @@ PRD / plan source: `RDP-v3.0-source.pdf` (8 pages) and `/data/data/com.termux/fi
 - [ ] 4. Production/QC
   - [x] 4.1 BOM/recipe, production plans, batches, consumption, rejects registers.
   - [x] 4.2 QC tests, hold/release/reject and batch status update on approval.
-  - [ ] 4.3 Full standard-vs-actual costing policy and attachment-based lab reports.
+  - [x] 4.3a Attachment-based lab reports, supplier bill scans, POD photos, expense proofs (local compressed demo + private Storage path).
+  - [ ] 4.3b Full standard-vs-actual costing policy (still pending).
 - [ ] 5. Delivery/accounts
   - [x] 5.1 Dispatch, driver/vehicle, POD, returnables registers.
   - [x] 5.2 Cash/bank, expenses, journals, ledgers, capital/drawings, fixed assets.
@@ -58,10 +59,10 @@ PRD / plan source: `RDP-v3.0-source.pdf` (8 pages) and `/data/data/com.termux/fi
 - v3 live URL: `https://smartbooksbasha-svg.github.io/glacier-erp-v3/`.
 
 ## Verification record
-- `npm test`: 16/16 assertions green (calc, posting/reversal/idempotency, UI login/nav/roles).
+- `npm test`: 22/22 green (calc, posting/reversal/idempotency, UI login/nav/roles, A4/80 mm invoice print, attachment fields + file input).
 - `npm run build`: green, hashed chunks emitted.
 - Live assets verified 200: `/`, `/index.html`, JS/CSS chunks, `/manifest.webmanifest`, `/sw.js`, `/fonts.css`, fonts, icons, `/RDP-v3.0-source.pdf`.
 - PostgreSQL schema file is written but NOT executed (no Supabase credentials supplied).
 
 ## NOW
-Waiting on external inputs for full go-live: Supabase URL + anon key, auditor approvals, v2 browser backup exports, owner/accountant reconciliation sign-off. Code foundation is live in demo mode.
+Invoice print (A4 GST + 80 mm) and attachment upload are implemented and verified locally. Waiting on external inputs for full go-live: Supabase URL + anon key, auditor approvals, v2 browser backup exports, owner/accountant reconciliation sign-off. Next code items: FEFO dispatch suggestion, full costing policy, mobile quick actions.

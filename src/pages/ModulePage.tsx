@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Btn, Chip, Empty, Field, Icon } from '../components/ui';
 import { formatMoney, toPaise } from '../lib/calc';
+import { getCompanyConfig } from '../lib/config';
 import { exportCsv, printRows } from '../lib/exports';
 import { findModule, type ModuleConfig } from '../lib/modules';
 import { can } from '../lib/permissions';
+import { printInvoiceA4, printInvoice80mm } from '../lib/printDocs';
 import { audit, cancelDocument, deleteRow, listRows, postDocument, saveRow } from '../lib/store';
 import type { Role, Row } from '../lib/types';
+import { readUpload, storagePathFor } from '../lib/upload';
 
 type FormState = Record<string, string | boolean>;
 
@@ -58,6 +61,7 @@ export function ModulePage({ moduleKey, role, actor }: { moduleKey: string; role
     for (const field of mod.fields) {
       const value = row ? row[field.name] : field.default;
       initial[field.name] = field.type === 'checkbox' ? Boolean(value) : value === undefined || value === null ? (field.type === 'date' ? new Date().toISOString().slice(0, 10) : '') : String(value);
+      if (field.type === 'file') initial[`${field.name}Name`] = row ? String(row[`${field.name}Name`] ?? '') : '';
     }
     setForm(initial);
     setEditing(row === undefined ? null : row);
@@ -77,6 +81,15 @@ export function ModulePage({ moduleKey, role, actor }: { moduleKey: string; role
           : field.type === 'number' ? Number(value || 0)
           : field.type === 'money' ? toPaise(String(value ?? '0'))
           : String(value ?? '');
+        if (field.type === 'file') {
+          const fileName = String(form[`${field.name}Name`] ?? '');
+          payload[`${field.name}Name`] = fileName;
+          payload[`${field.name}StoragePath`] = storagePathFor(mod.key, String(payload.id || 'new'), fileName || 'file');
+        }
+      }
+      if (mod.key === 'attachments') {
+        if (!String(payload.name ?? '').trim() && form.fileName) payload.name = String(form.fileName);
+        if (!String(payload.url ?? '').trim() && payload.file) payload.url = String(payload.file);
       }
       if (mod.statusField && !payload.status) payload.status = 'Draft';
       await saveRow(mod.key, payload as Row);
@@ -86,6 +99,18 @@ export function ModulePage({ moduleKey, role, actor }: { moduleKey: string; role
       await load();
     } catch (err) { setToast({ text: err instanceof Error ? err.message : 'Save failed.', err: true }); }
     finally { setBusy(false); }
+  };
+
+  const pickFile = async (fieldName: string, event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      setBusy(true);
+      const uploaded = await readUpload(file);
+      setForm((current) => ({ ...current, [fieldName]: uploaded.dataUrl, [`${fieldName}Name`]: uploaded.name }));
+      setToast({ text: `${uploaded.name} attached.` });
+    } catch (err) { setToast({ text: err instanceof Error ? err.message : 'Upload failed.', err: true }); }
+    finally { setBusy(false); event.target.value = ''; }
   };
 
   const doAction = async (row: Row, action: 'post' | 'delete') => {
@@ -132,6 +157,10 @@ export function ModulePage({ moduleKey, role, actor }: { moduleKey: string; role
             {mod.columns.map((c) => <td key={c}>{renderCell(c, row[c])}</td>)}
             <td><div className="row-actions">
               {can(role, 'edit') && <Btn small onClick={() => openForm(row)} aria-label="Edit"><Icon name="edit" size={14} /></Btn>}
+              {mod.key === 'invoices' && can(role, 'export') && <>
+                <Btn small onClick={() => printInvoiceA4(row, getCompanyConfig())} aria-label="Print A4 invoice">A4</Btn>
+                <Btn small onClick={() => printInvoice80mm(row, getCompanyConfig())} aria-label="Print 80 mm receipt">80mm</Btn>
+              </>}
               {mod.postable && can(role, 'post') && row.status !== 'Posted' && row.status !== 'Cancelled' && <Btn small variant="primary" onClick={() => void doAction(row, 'post')} disabled={busy} aria-label="Post"><Icon name="check" size={14} /></Btn>}
               {row.status !== 'Cancelled' && can(role, 'cancel') && <Btn small onClick={() => { setCancelRow(row); setCancelReason(''); }} aria-label="Cancel"><Icon name="ban" size={14} /></Btn>}
               {can(role, 'delete') && <Btn small variant="danger" onClick={() => void doAction(row, 'delete')} disabled={busy} aria-label="Delete"><Icon name="trash" size={14} /></Btn>}
@@ -143,14 +172,21 @@ export function ModulePage({ moduleKey, role, actor }: { moduleKey: string; role
       <div className="modal">
         <div className="modal-head"><h2>{editing ? 'Edit' : 'Add'} {mod.title.replace(/s$/, '')}</h2><button className="btn ghost small" onClick={() => setEditing(undefined)} aria-label="Close"><Icon name="close" /></button></div>
         <form onSubmit={submit}>
-          <div className="modal-body">{mod.fields.map((field) => <Field key={field.name} label={field.label} full={field.type === 'textarea'}>
+          <div className="modal-body">{mod.fields.map((field) => <Field key={field.name} label={field.label} full={field.type === 'textarea' || field.type === 'file'}>
             {field.type === 'select' ? <select className="input" value={String(form[field.name] ?? '')} onChange={(e) => setForm({ ...form, [field.name]: e.target.value })}>
               <option value="">—</option>{field.options?.map((o) => <option key={o} value={o}>{o}</option>)}
             </select>
             : field.type === 'textarea' ? <textarea className="input" rows={3} value={String(form[field.name] ?? '')} onChange={(e) => setForm({ ...form, [field.name]: e.target.value })} />
             : field.type === 'checkbox' ? <input className="input" type="checkbox" checked={Boolean(form[field.name])} onChange={(e) => setForm({ ...form, [field.name]: e.target.checked })} style={{ width: 'auto', minHeight: 0 }} />
+            : field.type === 'file' ? <div className="file-field">
+              <input className="input" type="file" accept="image/*,application/pdf" aria-label={field.label} onChange={(e) => void pickFile(field.name, e)} />
+              {form[field.name]
+                ? <span className="file-chip"><Icon name="upload" size={13} /> {String(form[`${field.name}Name`] ?? 'Attached')} <button type="button" onClick={() => setForm((current) => ({ ...current, [field.name]: '', [`${field.name}Name`]: '' }))} aria-label="Remove attachment"><Icon name="close" size={13} /></button></span>
+                : <span className="muted file-hint">No file attached</span>}
+            </div>
             : <input className="input" type={field.type === 'date' ? 'date' : field.type === 'number' || field.type === 'money' ? 'number' : 'text'} step={field.type === 'money' ? '0.01' : undefined} value={String(form[field.name] ?? '')} onChange={(e) => setForm({ ...form, [field.name]: e.target.value })} />}
-          </Field>)}</div>
+          </Field>)}
+          {mod.fields.some((field) => field.type === 'file') && <p className="file-note">Demo mode: files are saved on this device only (images compressed to 1280px). After Supabase setup they move to the private Storage bucket.</p>}</div>
           <div className="modal-foot"><Btn onClick={() => setEditing(undefined)}>Cancel</Btn><Btn type="submit" variant="primary" disabled={busy}>{busy ? 'Saving…' : 'Save'}</Btn></div>
         </form>
       </div>
